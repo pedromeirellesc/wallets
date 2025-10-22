@@ -9,25 +9,47 @@ use PDO;
 
 class UserRepositoryMySql implements UserRepositoryContract
 {
-
-    public function __construct(private PDO $pdo)
-    {
-        $this->pdo = $pdo;
-    }
+    public function __construct(private readonly PDO $pdo) {}
 
     public function save(User $user): User
     {
-        $sql = "INSERT INTO users (name, email, password, type) VALUES (:name, :email, :password, :type)";
+        if ($user->id() === 0) {
+            return $this->insert($user);
+        }
+
+        return $this->update($user);
+    }
+
+    public function insert(User $user): User
+    {
+        $sql = "INSERT INTO users (name, email, password, type) 
+                VALUES (:name, :email, :password, :type)";
+
         $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':name' => $user->name(),
+            ':email' => $user->email(),
+            ':password' => $user->password(),
+            ':type' => $user->type()->value,
+        ]);
 
-        $stmt->bindValue(':name', $user->name());
-        $stmt->bindValue(':email', $user->email());
-        $stmt->bindValue(':password', $user->password());
-        $stmt->bindValue(':type', $user->type());
+        return $user->withId((int) $this->pdo->lastInsertId());
+    }
 
-        $stmt->execute();
+    public function update(User $user): User
+    {
+        $sql = "UPDATE users 
+                SET name = :name, email = :email, password = :password, type = :type 
+                WHERE id = :id";
 
-        $user->setId((int) $this->pdo->lastInsertId());
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':id' => $user->id(),
+            ':name' => $user->name(),
+            ':email' => $user->email(),
+            ':password' => $user->password(),
+            ':type' => $user->type()->value,
+        ]);
 
         return $user;
     }
@@ -35,19 +57,23 @@ class UserRepositoryMySql implements UserRepositoryContract
     public function findByEmail(string $email): ?User
     {
         $sql = "SELECT id, name, email, password, type FROM users WHERE email = :email";
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':email', $email);
-        $stmt->execute();
+        $stmt->execute([':email' => $email]);
 
-        $user = $stmt->fetch();
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $user === false ? null : $this->hydrate($user);
+        return $data ? $this->hydrate($data) : null;
     }
 
     public function hydrate(array $data): User
     {
-        $user = new User($data['name'], $data['email'], $data['password'], UserType::from($data['type']));
-        $user->setId((int) $data['id']);
-        return $user;
+        return User::reconstitute(
+            (int) $data['id'],
+            $data['name'],
+            $data['email'],
+            $data['password'],
+            UserType::from($data['type'])
+        );
     }
 }

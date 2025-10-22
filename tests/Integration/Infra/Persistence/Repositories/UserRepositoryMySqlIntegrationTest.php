@@ -22,7 +22,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
 
     public function testSaveInsertUserSuccessfully(): void
     {
-        $user = new User('John Doe', 'john@example.com', 'hashed_password_123', UserType::COMMON);
+        $user = User::create('John Doe', 'john@example.com', 'hashed_password_123', UserType::COMMON);
 
         $this->repository->save($user);
 
@@ -30,7 +30,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
             'name' => $user->name(),
             'email' => $user->email(),
             'password' => $user->password(),
-            'type' => $user->type(),
+            'type' => $user->type()->value,
         ];
         $this->assertDatabaseHas('users', $userData);
     }
@@ -38,13 +38,13 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
     public function testSaveMultipleUsersWithDifferentEmails(): void
     {
         $users = [
-            new User(
+            User::create(
                 'John Doe',
                 'john@example.com',
                 'hash1',
                 UserType::COMMON
             ),
-            new User(
+            User::create(
                 'Jane Smith',
                 'jane@example.com',
                 'hash2',
@@ -61,7 +61,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
                 'name' => $userData->name(),
                 'email' => $userData->email(),
                 'password' => $userData->password(),
-                'type' => $userData->type(),
+                'type' => $userData->type()->value,
             ];
             $this->assertDatabaseHas('users', $userData);
         }
@@ -69,7 +69,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
 
     public function testFindByEmailReturnsUserData(): void
     {
-        $userData = new User(
+        $userData = User::create(
             'John Doe',
             'john@example.com',
             'hashed_password',
@@ -84,7 +84,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
         $this->assertEquals('John Doe', $result->name());
         $this->assertEquals('john@example.com', $result->email());
         $this->assertEquals('hashed_password', $result->password());
-        $this->assertEquals('COMMON', $result->type());
+        $this->assertEquals('COMMON', $result->type()->value);
     }
 
     public function testFindByEmailReturnsNullWhenUserNotExists(): void
@@ -96,7 +96,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
 
     public function testFindByEmailFindsByExactEmail(): void
     {
-        $userData = new User(
+        $userData = User::create(
             'John Doe',
             'john@example.com',
             'hash',
@@ -114,7 +114,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
 
     public function testFindByEmailReturnCompleteUserData(): void
     {
-        $userData = new User(
+        $userData = User::create(
             'Jane Smith',
             'jane@example.com',
             'secure_hash',
@@ -135,12 +135,12 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
         $this->assertIsString($result->name());
         $this->assertIsString($result->email());
         $this->assertIsString($result->password());
-        $this->assertIsString($result->type());
+        $this->assertIsString($result->type()->value);
     }
 
     public function testSavePreservesDataIntegrity(): void
     {
-        $originalData = new User(
+        $originalData = User::create(
             'Complex Name With Spëcial Çhars',
             'test+tag@example.co.uk',
             'p@$$w0rd!#%',
@@ -154,19 +154,19 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
         $this->assertEquals($originalData->name(), $result->name());
         $this->assertEquals($originalData->email(), $result->email());
         $this->assertEquals($originalData->password(), $result->password());
-        $this->assertEquals($originalData->type(), $result->type());
+        $this->assertEquals($originalData->type()->value, $result->type()->value);
     }
 
     public function testFindByEmailAfterMultipleSaves(): void
     {
-        $user1 = new User(
+        $user1 = User::create(
             'User One',
             'user1@example.com',
             'hash1',
             UserType::COMMON
         );
 
-        $user2 = new User(
+        $user2 = User::create(
             'User Two',
             'user2@example.com',
             'hash2',
@@ -182,7 +182,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
         $this->assertEquals('User One', $result1->name());
         $this->assertEquals('User Two', $result2->name());
         $this->assertNotEquals($result1->id(), $result2->id());
-        $this->assertEquals('COMMON', $result1->type());
-        $this->assertEquals('COMMON', $result2->type());
+        $this->assertEquals('COMMON', $result1->type()->value);
+        $this->assertEquals('COMMON', $result2->type()->value);
     }
 }

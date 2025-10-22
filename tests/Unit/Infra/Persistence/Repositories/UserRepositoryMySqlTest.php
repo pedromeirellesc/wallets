@@ -29,33 +29,57 @@ class UserRepositoryMySqlTest extends TestCase
         $this->repository = new UserRepositoryMySql($this->pdoMock);
     }
 
-    public function testSaveExecutesInsertStatementWithCorrectData(): void
+    public function testSaveCallsInsertWhenUserIdIsZero(): void
     {
-        $user = new User('John Doe', 'john@example.com', 'hashed_password', UserType::COMMON);
+        $user = User::create('John Doe', 'john@example.com', 'hashed_password', UserType::COMMON);
+        $userWithId = $user->withId(1);
 
-        $this->pdoMock
-            ->expects($this->once())
-            ->method('prepare')
-            ->with("INSERT INTO users (name, email, password, type) VALUES (:name, :email, :password, :type)")
-            ->willReturn($this->stmtMock);
+        $repository = $this->getMockBuilder(UserRepositoryMySql::class)
+            ->setConstructorArgs([$this->pdoMock])
+            ->onlyMethods(['insert', 'update'])
+            ->getMock();
 
-        $this->stmtMock
-            ->expects($this->exactly(4))
-            ->method('bindValue');
+        $repository->expects($this->once())
+            ->method('insert')
+            ->with($this->identicalTo($user))
+            ->willReturn($userWithId);
 
-        $this->stmtMock
-            ->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
+        $repository->expects($this->never())
+            ->method('update');
 
-        $this->repository->save($user);
+        $result = $repository->save($user);
+
+        $this->assertSame($userWithId, $result);
+    }
+
+    public function testSaveCallsInsertWhenUserIdIsNotZero(): void
+    {
+        $user = User::create('John Doe', 'john@example.com', 'hashed_password', UserType::COMMON);
+        $user = $user->withId(1);
+
+        $repository = $this->getMockBuilder(UserRepositoryMySql::class)
+            ->setConstructorArgs([$this->pdoMock])
+            ->onlyMethods(['insert', 'update'])
+            ->getMock();
+
+        $repository->expects($this->once())
+            ->method('update')
+            ->with($this->identicalTo($user))
+            ->willReturn($user);
+
+        $repository->expects($this->never())
+            ->method('insert');
+
+        $result = $repository->save($user);
+
+        $this->assertSame($user, $result);
     }
 
     public function testFindByEmailReturnUserDataWhenFound(): void
     {
         $email = 'john@example.com';
-        $expectedUser = new User('John Doe', $email, 'hashed_password', UserType::COMMON);
-        $expectedUser->setId(1);
+        $expectedUser = User::create('John Doe', $email, 'hashed_password', UserType::COMMON);
+        $expectedUser = $expectedUser->withId(1);
 
         $userDataFromDb = [
             'id' => 1,
@@ -73,12 +97,8 @@ class UserRepositoryMySqlTest extends TestCase
 
         $this->stmtMock
             ->expects($this->once())
-            ->method('bindValue')
-            ->with(':email', $email);
-
-        $this->stmtMock
-            ->expects($this->once())
-            ->method('execute');
+            ->method('execute')
+            ->with([':email' => $email]);
 
         $this->stmtMock
             ->expects($this->once())
@@ -88,6 +108,7 @@ class UserRepositoryMySqlTest extends TestCase
         $result = $this->repository->findByEmail($email);
 
         $this->assertEquals($expectedUser, $result);
+        $this->assertNotNull($result);
     }
 
     public function testFindByEmailReturnsNullWhenNotFound(): void
@@ -102,12 +123,8 @@ class UserRepositoryMySqlTest extends TestCase
 
         $this->stmtMock
             ->expects($this->once())
-            ->method('bindValue')
-            ->with(':email', $email);
-
-        $this->stmtMock
-            ->expects($this->once())
-            ->method('execute');
+            ->method('execute')
+            ->with([':email' => $email]);
 
         $this->stmtMock
             ->expects($this->once())
@@ -119,23 +136,27 @@ class UserRepositoryMySqlTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function testFindByEmailUsesCorrectEmailParameter(): void
+    public function testHydrateUser(): void
     {
-        $email = 'test@example.com';
+        $userDataFromDb = [
+            'id' => 1,
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'password' => 'hashed_password',
+            'type' => 'COMMON'
+        ];
 
-        $this->stmtMock
-            ->expects($this->once())
-            ->method('bindValue')
-            ->with(':email', $email);
+        $expectedUser = User::reconstitute(
+            $userDataFromDb['id'],
+            $userDataFromDb['name'],
+            $userDataFromDb['email'],
+            $userDataFromDb['password'],
+            UserType::from($userDataFromDb['type'])
+        );
 
-        $this->stmtMock
-            ->method('execute');
+        $result = $this->repository->hydrate($userDataFromDb);
 
-        $this->stmtMock
-            ->method('fetch')
-            ->willReturn(false);
-
-        $this->repository->findByEmail($email);
+        $this->assertEquals($expectedUser, $result);
     }
 
 }

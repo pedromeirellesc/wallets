@@ -6,18 +6,36 @@ use App\Enums\UserType;
 
 class User
 {
-    private int $id;
-    private string $name;
-    private string $email;
-    private string $password;
-    private UserType $type;
+    private function __construct(
+        private readonly int $id,
+        private readonly string $name,
+        private readonly string $email,
+        private readonly string $password,
+        private readonly UserType $type
+    ) {}
 
-    public function __construct(string $name, string $email, string $password, UserType $type)
+    public static function create(
+        string $name,
+        string $email,
+        string $password,
+        UserType $type
+    ): self {
+        return new self(0, $name, $email, $password, $type);
+    }
+
+    public static function reconstitute(
+        int $id,
+        string $name,
+        string $email,
+        string $password,
+        UserType $type
+    ): self {
+        return new self($id, $name, $email, $password, $type);
+    }
+
+    public function withId(int $id): self
     {
-        $this->name = $name;
-        $this->email = $email;
-        $this->password = $password;
-        $this->type = $type;
+        return new self($id, $this->name, $this->email, $this->password, $this->type);
     }
 
     public function id(): int
@@ -40,13 +58,8 @@ class User
         return $this->password;
     }
 
-    public function type(): string
+    public function type(): UserType
     {
-        return $this->type->value;
-    }
-
-    public function setId(int $id): void
-    {
-        $this->id = $id;
+        return $this->type;
     }
 }

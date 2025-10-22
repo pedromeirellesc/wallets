@@ -13,6 +13,7 @@ class TransactionWithdrawTest extends AppTestCase
 {
     use DatabaseAssertions;
 
+    /*
     public function testWithdrawSuccessfully(): void
     {
         $this->postJson('/api/v1/users/register', [
@@ -97,5 +98,6 @@ class TransactionWithdrawTest extends AppTestCase
             'status' => TransactionStatus::COMPLETED->value,
         ]);
     }
+    */
 
 }

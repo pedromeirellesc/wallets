@@ -28,7 +28,7 @@ class WalletRepositoryMySqlIntegrationTest extends AppTestCase
 
     public function testSaveInsertWalletSuccessfully(): void
     {
-        $user = new User('Test User', 'test@example.com', 'password', UserType::COMMON);
+        $user = User::create('Test User', 'test@example.com', 'password', UserType::COMMON);
         $user = $this->userRepository->save($user);
         $wallet = new Wallet($user->id(), new Money(100));
 
@@ -44,7 +44,7 @@ class WalletRepositoryMySqlIntegrationTest extends AppTestCase
 
     public function testFindByIdReturnsWallet(): void
     {
-        $user = new User('Test User', 'test@example.com', 'password', UserType::COMMON);
+        $user = User::create('Test User', 'test@example.com', 'password', UserType::COMMON);
         $user = $this->userRepository->save($user);
         $wallet = new Wallet($user->id(), new Money(100));
         $wallet = $this->repository->save($wallet);
@@ -66,7 +66,7 @@ class WalletRepositoryMySqlIntegrationTest extends AppTestCase
 
     public function testFindAllReturnsAllWallets(): void
     {
-        $user = new User('Test User', 'test@example.com', 'password', UserType::COMMON);
+        $user = User::create('Test User', 'test@example.com', 'password', UserType::COMMON);
         $user = $this->userRepository->save($user);
         $wallet = new Wallet($user->id(), new Money(100));
         $wallet = $this->repository->save($wallet);
