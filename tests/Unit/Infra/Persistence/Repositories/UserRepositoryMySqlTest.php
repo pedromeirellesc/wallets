@@ -52,7 +52,7 @@ class UserRepositoryMySqlTest extends TestCase
         $this->assertSame($userWithId, $result);
     }
 
-    public function testSaveCallsInsertWhenUserIdIsNotZero(): void
+    public function testSaveCallsUpdateWhenUserIdIsNotZero(): void
     {
         $user = User::create('John Doe', 'john@example.com', 'hashed_password', UserType::COMMON);
         $user = $user->withId(1);
@@ -73,6 +73,59 @@ class UserRepositoryMySqlTest extends TestCase
         $result = $repository->save($user);
 
         $this->assertSame($user, $result);
+    }
+
+    public function testInsertSuccessfully(): void
+    {
+        $user = User::create('John Doe', 'john@example.com', 'hashed_password', UserType::COMMON);
+        $userWithId = $user->withId(1);
+
+        $this->pdoMock
+            ->expects($this->once())
+            ->method('prepare')
+            ->with("INSERT INTO users (name, email, password, type) VALUES (:name, :email, :password, :type)")
+            ->willReturn($this->stmtMock);
+
+        $this->stmtMock
+            ->expects($this->once())
+            ->method('execute')
+            ->with([
+                ':name' => 'John Doe',
+                ':email' => 'john@example.com',
+                ':password' => 'hashed_password',
+                ':type' => 'COMMON',
+            ]);
+
+        $result = $this->repository->insert($user);
+
+        $this->assertInstanceOf(User::class, $result);
+    }
+
+    public function testUpdateSuccessfully(): void
+    {
+        $user = User::create('John Doe', 'john@example.com', 'hashed_password', UserType::COMMON);
+        $user = $user->withId(1);
+
+        $this->pdoMock
+            ->expects($this->once())
+            ->method('prepare')
+            ->with("UPDATE users SET name = :name, email = :email, password = :password, type = :type WHERE id = :id")
+            ->willReturn($this->stmtMock);
+
+        $this->stmtMock
+            ->expects($this->once())
+            ->method('execute')
+            ->with([
+                ':id' => 1,
+                ':name' => 'John Doe',
+                ':email' => 'john@example.com',
+                ':password' => 'hashed_password',
+                ':type' => 'COMMON',
+            ]);
+
+        $result = $this->repository->update($user);
+
+        $this->assertInstanceOf(User::class, $result);
     }
 
     public function testFindByEmailReturnUserDataWhenFound(): void

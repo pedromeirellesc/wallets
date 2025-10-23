@@ -3,64 +3,98 @@
 namespace App\Infra\Persistence\Repositories;
 
 use App\Infra\Persistence\Repositories\Contracts\WalletRepositoryContract;
-use App\Models\User;
 use App\Models\Wallet;
 use App\ValueObjects\Money;
+use DateTimeImmutable;
 use PDO;
-use Ramsey\Uuid\Uuid;
 
 class WalletRepositoryMySql implements WalletRepositoryContract
 {
-    public function __construct(private PDO $pdo)
-    {
-        $this->pdo = $pdo;
-    }
+    public function __construct(private readonly PDO $pdo) {}
 
     public function save(Wallet $wallet): Wallet
     {
-        if (!$wallet->id()) {
-            $wallet->setId(Uuid::uuid4()->toString());
+        $exists = $this->findById($wallet->id()) !== null;
 
-            $this->pdo->prepare('INSERT INTO wallets (id, user_id, balance) VALUES (:id,:user_id, :balance)')
-                ->execute([
-                    'id' => $wallet->id(),
-                    'user_id' => $wallet->userId(),
-                    'balance' => $wallet->balance()->toCents(),
-                ]);
+        if (!$exists) {
+            return $this->insert($wallet);
         }
+
+        return $this->update($wallet);
+    }
+
+    public function insert(Wallet $wallet): Wallet
+    {
+        $sql = "INSERT INTO wallets (id, user_id, balance, created_at, updated_at) VALUES (:id, :user_id, :balance, :created_at, :updated_at)";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':id' => $wallet->id(),
+            ':user_id' => $wallet->userId(),
+            ':balance' => $wallet->balance()->toCents(),
+            ':created_at' => $wallet->createdAt()->format('Y-m-d H:i:s'),
+            ':updated_at' => $wallet->updatedAt()->format('Y-m-d H:i:s'),
+        ]);
 
         return $wallet;
     }
 
     public function update(Wallet $wallet): Wallet
     {
-        $this->pdo->prepare('UPDATE wallets SET balance = :balance WHERE id = :id')
-            ->execute([
-                'id' => $wallet->id(),
-                'balance' => $wallet->balance()->toCents(),
-            ]);
+        $sql = "UPDATE wallets SET balance = :balance, updated_at = :updated_at WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':id' => $wallet->id(),
+            ':balance' => $wallet->balance()->toCents(),
+            ':updated_at' => $wallet->updatedAt()->format('Y-m-d H:i:s'),
+        ]);
 
         return $wallet;
     }
 
     public function findById(string $id): ?Wallet
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM wallets WHERE id = :id');
-        $stmt->execute([':id' => $id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $sql = "SELECT id, user_id, balance, created_at, updated_at FROM wallets WHERE id = :id";
 
-        return $result ? $this->hydrate($result) : null;
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $data ? $this->hydrate($data) : null;
+    }
+
+    public function findByUserId(int $userId): ?Wallet
+    {
+        $sql = "SELECT id, user_id, balance, created_at, updated_at FROM wallets WHERE user_id = :user_id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':user_id' => $userId]);
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $data ? $this->hydrate($data) : null;
     }
 
     public function findAll(): array
     {
-        return $this->pdo->query('SELECT * FROM wallets')->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "SELECT id, user_id, balance, created_at, updated_at FROM wallets";
+
+        $stmt = $this->pdo->query($sql);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(fn($data) => $this->hydrate($data), $results);
     }
 
     public function hydrate(array $data): Wallet
     {
-        $wallet = new Wallet($data['user_id'], new Money($data['balance']));
-        $wallet->setId($data['id']);
-        return $wallet;
+        return Wallet::reconstitute(
+            $data['id'],
+            (int) $data['user_id'],
+            Money::fromCents((int) $data['balance']),
+            new DateTimeImmutable($data['created_at']),
+            new DateTimeImmutable($data['updated_at'])
+        );
     }
 }

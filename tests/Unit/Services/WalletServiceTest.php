@@ -2,109 +2,177 @@
 
 namespace Tests\Unit\Services;
 
-use App\Exceptions\ValidationException;
+use App\Enums\UserType;
+use App\Infra\Persistence\Repositories\Contracts\UserRepositoryContract;
+use App\Models\User;
 use App\Models\Wallet;
-use App\Validators\WalletValidator;
 use App\ValueObjects\Money;
 use PHPUnit\Framework\TestCase;
 use App\Services\WalletService;
 use App\Infra\Persistence\Repositories\Contracts\WalletRepositoryContract;
-use Ramsey\Uuid\Uuid;
 
 class WalletServiceTest extends TestCase
 {
 
     private WalletService $walletService;
     private WalletRepositoryContract $walletRepository;
-    private WalletValidator $walletValidator;
+    private UserRepositoryContract $userRepository;
+    private Wallet $wallet;
 
     public function setUp(): void
     {
         parent::setUp();
 
         $this->walletRepository = $this->createMock(WalletRepositoryContract::class);
-        $this->walletValidator = $this->createMock(WalletValidator::class);
-        $this->walletService = new WalletService($this->walletRepository, $this->walletValidator);
+        $this->userRepository = $this->createMock(UserRepositoryContract::class);
+        $this->wallet = $this->createMock(Wallet::class);
+        $this->walletService = new WalletService($this->walletRepository, $this->userRepository);
     }
 
-    public function testCreateWalletSuccessfully(): void
+    public function testCreateWalletForUserSuccessfully(): void
     {
-        $this->walletValidator
+        $this->userRepository
             ->expects($this->once())
-            ->method('validateCreate')
-            ->willReturn([]);
+            ->method('findById')
+            ->willReturn(User::create('John Doe', 'john@example.com', 'password', UserType::COMMON));
+
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('findByUserId')
+            ->willReturn(null);
 
         $this->walletRepository
             ->expects($this->once())
             ->method('save')
-            ->willReturn(new Wallet(1, new Money(100)));
+            ->willReturn(Wallet::create(1));
 
-        $this->walletService->createWalletForUser(1);
+        $output = $this->walletService->createWalletForUser(1);
+        $this->assertInstanceOf(Wallet::class, $output);;
     }
 
-    public function testCreateWalletWithInvalidFields(): void
+    public function testCreateWalletForUserWhenUserNotFound(): void
     {
-        $this->expectException(ValidationException::class);
-
-        $this->walletValidator
+        $this->userRepository
             ->expects($this->once())
-            ->method('validateCreate')
-            ->willThrowException(new ValidationException(['user_id' => 'The user ID does not exist.']));
+            ->method('findById')
+            ->willReturn(null);
+
+        $this->expectException(\DomainException::class);
 
         $this->walletService->createWalletForUser(1);
     }
 
-    public function testIndexSuccessfully(): void
+    public function testCreateWalletForUserWhenUserAlreadyHasWallet(): void
+    {
+        $this->userRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->willReturn(User::create('John Doe', 'john@example.com', 'password', UserType::COMMON));
+
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('findByUserId')
+            ->willReturn(Wallet::create(1));
+
+        $this->expectException(\DomainException::class);
+
+        $this->walletService->createWalletForUser(1);
+    }
+
+    public function testFindAllSuccessfully(): void
     {
         $this->walletRepository
             ->expects($this->once())
             ->method('findAll')
             ->willReturn([
-                [
-                    'id' => Uuid::uuid4()->toString(),
-                    'user_id' => 1,
-                    'balance' => 100
-                ],
-                [
-                    'id' => Uuid::uuid4()->toString(),
-                    'user_id' => 2,
-                    'balance' => 200
-                ],
+                Wallet::create(1),
+                Wallet::create(2),
             ]);
 
-        $result = $this->walletService->index();
-
-        $this->assertIsArray($result);
-        $this->assertCount(2, $result);
-        $this->assertArrayHasKey('id', $result[0]);
-        $this->assertArrayHasKey('user_id', $result[0]);
-        $this->assertArrayHasKey('balance', $result[0]);
-        $this->assertArrayHasKey('id', $result[1]);
-        $this->assertArrayHasKey('user_id', $result[1]);
-        $this->assertArrayHasKey('balance', $result[1]);
+        $output = $this->walletService->findAll();
+        $this->assertIsArray($output);
+        $this->assertCount(2, $output);
+        $this->assertInstanceOf(Wallet::class, $output[0]);
+        $this->assertInstanceOf(Wallet::class, $output[1]);
     }
 
-    public function testShowSuccessfully(): void
+    public function testFindByIdSuccessfully(): void
     {
         $this->walletRepository
             ->expects($this->once())
             ->method('findById')
-            ->willReturn(new Wallet(1, new Money(100)));
+            ->willReturn(Wallet::create(1));
 
-        $result = $this->walletService->show(1);
-
-        $this->assertEquals(new Wallet(1, new Money(100)), $result);
+        $output = $this->walletService->findById(1);
+        $this->assertInstanceOf(Wallet::class, $output);
     }
 
-    public function testShowWalletNotFound(): void
+    public function testFindByIdWhenWalletNotFound(): void
     {
         $this->walletRepository
             ->expects($this->once())
             ->method('findById')
             ->willReturn(null);
 
-        $result = $this->walletService->show(1);
+        $output = $this->walletService->findById(1);
+        $this->assertNull($output);
+    }
 
-        $this->assertNull($result);
+    public function testDepositSuccessfully(): void
+    {
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->willReturn(Wallet::create(1));
+
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('save')
+            ->willReturn(Wallet::create(1)->deposit(Money::fromCents(100)));
+
+        $output = $this->walletService->deposit(1, Money::fromCents(100));
+        $this->assertInstanceOf(Wallet::class, $output);
+        $this->assertEquals(Money::fromCents(100)->toCents(), $output->balance()->toCents());
+    }
+
+    public function testDepositWhenWalletNotFound(): void
+    {
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->willReturn(null);
+
+        $this->expectException(\DomainException::class);
+
+        $this->walletService->deposit(1, Money::fromCents(100));
+    }
+
+    public function testWitdrawSuccessfully(): void
+    {
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->willReturn(Wallet::create(1)->deposit(Money::fromCents(100)));
+
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('save')
+            ->willReturn(Wallet::create(1)->deposit(Money::fromCents(100))->withdraw(Money::fromCents(100)));
+
+        $output = $this->walletService->withdraw(1, Money::fromCents(100));
+        $this->assertInstanceOf(Wallet::class, $output);
+        $this->assertEquals(Money::fromCents(0)->toCents(), $output->balance()->toCents());
+    }
+
+    public function testWithdrawWhenWalletNotFound(): void
+    {
+        $this->walletRepository
+            ->expects($this->once())
+            ->method('findById')
+            ->willReturn(null);
+
+        $this->expectException(\DomainException::class);
+
+        $this->walletService->withdraw(1, Money::fromCents(100));
     }
 }

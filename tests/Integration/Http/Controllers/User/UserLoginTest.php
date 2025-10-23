@@ -3,6 +3,9 @@
 namespace Http\Controllers\User;
 
 use App\Enums\UserType;
+use App\Http\Controllers\UserController;
+use App\Services\UserService;
+use Psr\Http\Message\ServerRequestInterface;
 use Tests\AppTestCase;
 use Tests\Traits\DatabaseAssertions;
 
@@ -56,5 +59,30 @@ class UserLoginTest extends AppTestCase
         $responseData = json_decode($response->getBody()->getContents(), true);
         $this->assertArrayHasKey('error', $responseData);
         $this->assertEquals('Invalid credentials.', $responseData['error']);
+    }
+
+    public function testLoginFailsWhenServiceThrowsException(): void
+    {
+        $userServiceMock = $this->createMock(UserService::class);
+        $userServiceMock
+            ->method('login')
+            ->willThrowException(new \RuntimeException('Database connection failed'));
+
+        $controller = new UserController($userServiceMock);
+
+        $request = $this->createMock(ServerRequestInterface::class);
+        $request
+            ->method('getParsedBody')
+            ->willReturn([
+                'email' => $this->userData['email'],
+                'password' => $this->password,
+            ]);
+
+        $response = $controller->login($request);
+
+        $this->assertEquals(500, $response->getStatusCode());
+
+        $responseBody = json_decode($response->getBody()->getContents(), true);
+        $this->assertArrayHasKey('error', $responseBody);
     }
 }

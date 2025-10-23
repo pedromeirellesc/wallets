@@ -30,7 +30,7 @@ class WalletRepositoryMySqlIntegrationTest extends AppTestCase
     {
         $user = User::create('Test User', 'test@example.com', 'password', UserType::COMMON);
         $user = $this->userRepository->save($user);
-        $wallet = new Wallet($user->id(), new Money(100));
+        $wallet = Wallet::create($user->id());
 
         $this->repository->save($wallet);
 
@@ -46,7 +46,7 @@ class WalletRepositoryMySqlIntegrationTest extends AppTestCase
     {
         $user = User::create('Test User', 'test@example.com', 'password', UserType::COMMON);
         $user = $this->userRepository->save($user);
-        $wallet = new Wallet($user->id(), new Money(100));
+        $wallet = Wallet::create($user->id());
         $wallet = $this->repository->save($wallet);
 
         $result = $this->repository->findById($wallet->id());
@@ -68,15 +68,15 @@ class WalletRepositoryMySqlIntegrationTest extends AppTestCase
     {
         $user = User::create('Test User', 'test@example.com', 'password', UserType::COMMON);
         $user = $this->userRepository->save($user);
-        $wallet = new Wallet($user->id(), new Money(100));
+        $wallet = Wallet::create($user->id());
         $wallet = $this->repository->save($wallet);
 
         $result = $this->repository->findAll();
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
-        $this->assertEquals($wallet->id(), $result[0]['id']);
-        $this->assertEquals($wallet->userId(), $result[0]['user_id']);
-        $this->assertEquals($wallet->balance()->toCents(), $result[0]['balance']);
+        $this->assertEquals($wallet->id(), $result[0]->id());
+        $this->assertEquals($wallet->userId(), $result[0]->userId());
+        $this->assertEquals($wallet->balance()->toCents(), $result[0]->balance()->toCents());
     }
 
     public function testFindAllReturnsEmptyArrayWhenNoWalletsFound(): void

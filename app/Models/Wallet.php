@@ -3,22 +3,86 @@
 namespace App\Models;
 
 use App\ValueObjects\Money;
+use DateTimeImmutable;
+use Ramsey\Uuid\Uuid;
 
 class Wallet
 {
-    private ?string $id = null;
-    private int $userId;
-    private Money $balance;
-    private ?string $createdAt = null;
-    private ?string $updatedAt = null;
-
-    public function __construct(int $userId, Money $balance = null)
-    {
-        $this->userId = $userId;
-        $this->balance = $balance ?? Money::zero();
+    private function __construct(
+        private readonly string $id,
+        private readonly int $userId,
+        private readonly Money $balance,
+        private readonly DateTimeImmutable $createdAt,
+        private readonly DateTimeImmutable $updatedAt
+    ) {
     }
 
-    public function id(): ?string
+    public static function create(int $userId): self
+    {
+        $now = new DateTimeImmutable();
+
+        return new self(
+            Uuid::uuid4()->toString(),
+            $userId,
+            Money::zero(),
+            $now,
+            $now
+        );
+    }
+
+    public static function reconstitute(
+        string $id,
+        int $userId,
+        Money $balance,
+        DateTimeImmutable $createdAt,
+        DateTimeImmutable $updatedAt
+    ): self {
+        return new self($id, $userId, $balance, $createdAt, $updatedAt);
+    }
+
+    public function withId(string $id): self
+    {
+        return new self(
+            $id,
+            $this->userId,
+            $this->balance,
+            $this->createdAt,
+            $this->updatedAt
+        );
+    }
+
+    public function deposit(Money $amount): self
+    {
+        return new self(
+            $this->id,
+            $this->userId,
+            $this->balance->add($amount),
+            $this->createdAt,
+            new DateTimeImmutable()
+        );
+    }
+
+    public function withdraw(Money $amount): self
+    {
+        if ($this->balance->isLessThan($amount)) {
+            throw new \DomainException('Insufficient funds');
+        }
+
+        return new self(
+            $this->id,
+            $this->userId,
+            $this->balance->subtract($amount),
+            $this->createdAt,
+            new DateTimeImmutable()
+        );
+    }
+
+    public function canWithdraw(Money $amount): bool
+    {
+        return $this->balance->isGreaterThanOrEqual($amount);
+    }
+
+    public function id(): string
     {
         return $this->id;
     }
@@ -33,51 +97,13 @@ class Wallet
         return $this->balance;
     }
 
-
-    public function createdAt(): ?string
+    public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function updatedAt(): ?string
+    public function updatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
-    }
-
-    public function setId(string $id): void
-    {
-        $this->id = $id;
-    }
-
-    public function setCreatedAt(string $createdAt): void
-    {
-        $this->createdAt = $createdAt;
-    }
-
-    public function setUpdatedAt(string $updatedAt): void
-    {
-        $this->updatedAt = $updatedAt;
-    }
-
-    public function deposit(Money $amount): void
-    {
-        if (!$amount->isPositive()) {
-            throw new \InvalidArgumentException('Amount must be positive');
-        }
-
-        $this->balance = $this->balance->add($amount);
-    }
-
-    public function withdraw(Money $amount): void
-    {
-        if (!$amount->isPositive()) {
-            throw new \InvalidArgumentException('Amount must be positive');
-        }
-
-        if ($this->balance->isLessThan($amount)) {
-            throw new \InvalidArgumentException('Insufficient funds');
-        }
-
-        $this->balance = $this->balance->subtract($amount);
     }
 }

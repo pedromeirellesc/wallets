@@ -9,7 +9,7 @@ class MoneyTest extends TestCase
 {
     public function testConstructorSetsAmount(): void
     {
-        $money = new Money(100);
+        $money = Money::fromCents(100);
 
         $this->assertEquals(100, $money->toCents());
     }
@@ -19,6 +19,14 @@ class MoneyTest extends TestCase
         $money = Money::fromCents(100);
 
         $this->assertEquals(100, $money->toCents());
+        $this->assertInstanceOf(Money::class, $money);
+    }
+
+    public function testMoneyFromCentsWhenNegative(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Money::fromCents(-100);
     }
 
     public function testMoneyFromFloat(): void
@@ -28,14 +36,14 @@ class MoneyTest extends TestCase
         $this->assertEquals(1050, $money->toCents());
     }
 
-    public function testMoneyIsZero(): void
+    public function testMoneyZero(): void
     {
         $money = Money::zero();
 
-        $this->assertTrue($money->isZero());
+        $this->assertEquals(0, $money->toCents());
     }
 
-    public function testAddMoney(): void
+    public function testMoneyAdd(): void
     {
         $money = Money::fromCents(100);
         $otherMoney = Money::fromCents(200);
@@ -45,22 +53,45 @@ class MoneyTest extends TestCase
         $this->assertEquals(300, $result->toCents());
     }
 
-    public function testSubtractMoney(): void
+    public function testMoneySubtract(): void
     {
         $money = Money::fromCents(100);
         $otherMoney = Money::fromCents(200);
 
-        $result = $money->subtract($otherMoney);
+        $this->expectException(\InvalidArgumentException::class);;
 
-        $this->assertEquals(-100, $result->toCents());
+        $money->subtract($otherMoney);
     }
 
-    public function testIsGreaterThan(): void
+    public function testMoneySubtractWhenResultIsNegative(): void
     {
         $money = Money::fromCents(100);
         $otherMoney = Money::fromCents(200);
 
-        $this->assertTrue($otherMoney->isGreaterThan($money));
+        $this->expectException(\InvalidArgumentException::class);;
+
+        $money->subtract($otherMoney);
+    }
+
+    public function testIsPositive(): void
+    {
+        $money = Money::fromCents(100);
+
+        $this->assertTrue($money->isPositive());
+    }
+
+    public function testIsNotPositive(): void
+    {
+        $money = Money::fromCents(0);
+
+        $this->assertFalse($money->isPositive());
+    }
+
+    public function testIsZero(): void
+    {
+        $money = Money::zero();
+
+        $this->assertTrue($money->isZero());
     }
 
     public function testIsLessThan(): void
@@ -71,63 +102,40 @@ class MoneyTest extends TestCase
         $this->assertTrue($money->isLessThan($otherMoney));
     }
 
-    public function testIsEqual(): void
+    public function testIsGreaterThan(): void
+    {
+        $money = Money::fromCents(100);
+        $otherMoney = Money::fromCents(200);
+
+        $this->assertTrue($otherMoney->isGreaterThan($money));
+    }
+
+    public function testMoneyToCents(): void
+    {
+        $money = Money::fromCents(100);
+
+        $this->assertEquals(100, $money->toCents());
+    }
+
+    public function testMoneyToFloat(): void
+    {
+        $money = Money::fromCents(100);
+
+        $this->assertEquals(1.0, $money->toFloat());
+    }
+
+    public function testMoneyFormat(): void
+    {
+        $money = Money::fromCents(100);
+
+        $this->assertEquals('R$ 1,00', $money->format());
+    }
+
+    public function testMoneyEquals(): void
     {
         $money = Money::fromCents(100);
         $otherMoney = Money::fromCents(100);
 
         $this->assertTrue($money->equals($otherMoney));
-    }
-
-    public function testIsNotEqual(): void
-    {
-        $money = Money::fromCents(100);
-        $otherMoney = Money::fromCents(200);
-
-        $this->assertFalse($money->equals($otherMoney));
-    }
-
-    public function testIsPositive(): void
-    {
-        $money = Money::fromCents(100);
-
-        $this->assertTrue($money->isPositive());
-        $this->assertFalse($money->isNegative());
-    }
-
-    public function testIsNegative(): void
-    {
-        $money = Money::fromCents(-100);
-
-        $this->assertFalse($money->isPositive());
-        $this->assertTrue($money->isNegative());
-    }
-
-    public function testIsZero(): void
-    {
-        $money = Money::zero();
-
-        $this->assertTrue($money->isZero());
-    }
-
-    public function testFormatToFloat(): void
-    {
-        $money = Money::fromCents(1050);
-
-        $this->assertEquals(10.5, $money->toFloat());
-    }
-
-    public function testFormatToCents(): void
-    {
-        $money = Money::fromCents(1050);
-
-        $this->assertEquals(1050, $money->toCents());
-    }
-
-    public function testFormatToString(): void
-    {
-        $money = Money::fromCents(1050);
-
-        $this->assertEquals('R$ 10,50', $money->format());
     }
 }

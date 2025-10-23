@@ -4,21 +4,20 @@ namespace App\ValueObjects;
 
 class Money
 {
-    private int $amountInCents;
-
-    public function __construct(int $amountInCents)
-    {
-        $this->amountInCents = $amountInCents;
-    }
+    private function __construct(private readonly int $cents) {}
 
     public static function fromCents(int $cents): self
     {
+        if ($cents < 0) {
+            throw new \InvalidArgumentException('Money cannot be negative');
+        }
+
         return new self($cents);
     }
 
     public static function fromFloat(float $amount): self
     {
-        return new self((int)round($amount * 100));
+        return self::fromCents((int) round($amount * 100));
     }
 
     public static function zero(): self
@@ -28,56 +27,62 @@ class Money
 
     public function add(Money $other): self
     {
-        return new self($this->amountInCents + $other->amountInCents);
+        return new self($this->cents + $other->cents);
     }
 
     public function subtract(Money $other): self
     {
-        return new self($this->amountInCents - $other->amountInCents);
-    }
+        $result = $this->cents - $other->cents;
 
-    public function isGreaterThan(Money $other): bool
-    {
-        return $this->amountInCents > $other->amountInCents;
-    }
+        if ($result < 0) {
+            throw new \InvalidArgumentException('Result cannot be negative');
+        }
 
-    public function isLessThan(Money $other): bool
-    {
-        return $this->amountInCents < $other->amountInCents;
-    }
-
-    public function equals(Money $other): bool
-    {
-        return $this->amountInCents === $other->amountInCents;
+        return new self($result);
     }
 
     public function isPositive(): bool
     {
-        return $this->amountInCents > 0;
-    }
-
-    public function isNegative(): bool
-    {
-        return $this->amountInCents < 0;
+        return $this->cents > 0;
     }
 
     public function isZero(): bool
     {
-        return $this->amountInCents === 0;
+        return $this->cents === 0;
     }
 
-    public function toFloat(): float
+    public function isLessThan(Money $other): bool
     {
-        return $this->amountInCents / 100;
+        return $this->cents < $other->cents;
+    }
+
+    public function isGreaterThan(Money $other): bool
+    {
+        return $this->cents > $other->cents;
+    }
+
+    public function isGreaterThanOrEqual(Money $other): bool
+    {
+        return $this->cents >= $other->cents;
     }
 
     public function toCents(): int
     {
-        return $this->amountInCents;
+        return $this->cents;
+    }
+
+    public function toFloat(): float
+    {
+        return $this->cents / 100;
     }
 
     public function format(): string
     {
         return 'R$ ' . number_format($this->toFloat(), 2, ',', '.');
+    }
+
+    public function equals(Money $other): bool
+    {
+        return $this->cents === $other->cents;
     }
 }
