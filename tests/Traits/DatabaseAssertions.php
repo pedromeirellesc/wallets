@@ -31,7 +31,7 @@ trait DatabaseAssertions
         $this->assertGreaterThan(
             0,
             $count,
-            "Failed asserting that the table '{$table}' has a row matching the criteria:\n{$criteriaJson}"
+            "Failed asserting that the table '{$table}' has a row matching the criteria:\n{$criteriaJson}",
         );
     }
 
@@ -60,7 +60,7 @@ trait DatabaseAssertions
         $this->assertLessThan(
             1,
             $count,
-            "Failed asserting that the table '{$table}' does not have a row matching the criteria:\n{$criteriaJson}"
+            "Failed asserting that the table '{$table}' does not have a row matching the criteria:\n{$criteriaJson}",
         );
     }
 }

@@ -20,7 +20,7 @@ class UserRegistrationTest extends AppTestCase
             'email' => 'john@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'type' => UserType::COMMON->value
+            'type' => UserType::COMMON->value,
         ];
 
         $response = $this->postJson('/api/v1/users/register', $data);
@@ -39,7 +39,7 @@ class UserRegistrationTest extends AppTestCase
             'email' => 'john@example',
             'password' => '123',
             'password_confirmation' => '123',
-            'type' => 'type'
+            'type' => 'type',
         ];
 
         $response = $this->postJson('/api/v1/users/register', $data);
@@ -67,7 +67,7 @@ class UserRegistrationTest extends AppTestCase
                 'email' => 'john@example.com',
                 'password' => 'password',
                 'password_confirmation' => 'password',
-                'type' => UserType::COMMON->value
+                'type' => UserType::COMMON->value,
             ]);
 
         $response = $controller->register($request);

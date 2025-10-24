@@ -2,13 +2,11 @@
 
 namespace Tests\Unit\Infra\Persistence\Repositories;
 
-use App\Infra\Persistence\Repositories\UserRepositoryMySql;
 use App\Infra\Persistence\Repositories\WalletRepositoryMySql;
 use App\Models\Wallet;
-use App\ValueObjects\Money;
-use PHPUnit\Framework\TestCase;
 use PDO;
 use PDOStatement;
+use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
 class WalletRepositoryMySqlTest extends TestCase
@@ -94,7 +92,7 @@ class WalletRepositoryMySqlTest extends TestCase
         $this->pdoMock->expects($this->once())
             ->method('prepare')
             ->with(
-                'INSERT INTO wallets (id, user_id, balance, created_at, updated_at) VALUES (:id, :user_id, :balance, :created_at, :updated_at)'
+                'INSERT INTO wallets (id, user_id, balance, created_at, updated_at) VALUES (:id, :user_id, :balance, :created_at, :updated_at)',
             )
             ->willReturn($this->stmtMock);
 
@@ -259,7 +257,7 @@ class WalletRepositoryMySqlTest extends TestCase
     {
         $expectedWallets = [
             Wallet::create(1),
-            Wallet::create(2)
+            Wallet::create(2),
         ];
 
         $this->pdoMock

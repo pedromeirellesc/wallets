@@ -11,14 +11,15 @@ class User
         private readonly string $name,
         private readonly string $email,
         private readonly string $password,
-        private readonly UserType $type
-    ) {}
+        private readonly UserType $type,
+    ) {
+    }
 
     public static function create(
         string $name,
         string $email,
         string $password,
-        UserType $type
+        UserType $type,
     ): self {
         return new self(0, $name, $email, $password, $type);
     }
@@ -28,7 +29,7 @@ class User
         string $name,
         string $email,
         string $password,
-        UserType $type
+        UserType $type,
     ): self {
         return new self($id, $name, $email, $password, $type);
     }

@@ -58,7 +58,8 @@ class MoneyTest extends TestCase
         $money = Money::fromCents(100);
         $otherMoney = Money::fromCents(200);
 
-        $this->expectException(\InvalidArgumentException::class);;
+        $this->expectException(\InvalidArgumentException::class);
+        ;
 
         $money->subtract($otherMoney);
     }
@@ -68,7 +69,8 @@ class MoneyTest extends TestCase
         $money = Money::fromCents(100);
         $otherMoney = Money::fromCents(200);
 
-        $this->expectException(\InvalidArgumentException::class);;
+        $this->expectException(\InvalidArgumentException::class);
+        ;
 
         $money->subtract($otherMoney);
     }

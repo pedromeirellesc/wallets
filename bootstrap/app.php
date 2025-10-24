@@ -5,10 +5,16 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Contracts\ExistsCheckerInterface;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WalletController;
 use App\Infra\Persistence\MySqlConnectionFactory;
+use App\Infra\Persistence\Repositories\Contracts\TransactionRepositoryContract;
 use App\Infra\Persistence\Repositories\Contracts\UserRepositoryContract;
+use App\Infra\Persistence\Repositories\Contracts\WalletRepositoryContract;
+use App\Infra\Persistence\Repositories\TransactionRepositoryMySql;
 use App\Infra\Persistence\Repositories\UserRepositoryMySql;
+use App\Infra\Persistence\Repositories\WalletRepositoryMySql;
 use App\Services\DatabaseExistsChecker;
 use App\Validators\UserValidator;
 use Dotenv\Dotenv;
@@ -18,12 +24,6 @@ use League\Container\ReflectionContainer;
 use League\Route\Router;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use App\Infra\Persistence\Repositories\Contracts\WalletRepositoryContract;
-use App\Infra\Persistence\Repositories\WalletRepositoryMySql;
-use App\Http\Controllers\WalletController;
-use App\Http\Controllers\TransactionController;
-use App\Infra\Persistence\Repositories\Contracts\TransactionRepositoryContract;
-use App\Infra\Persistence\Repositories\TransactionRepositoryMySql;
 
 if (file_exists(dirname(__DIR__) . '/.env')) {
     $dotenv = Dotenv::createImmutable(dirname(__DIR__));
@@ -84,6 +84,10 @@ $router->map('POST', '/api/v1/transactions/deposit/{walletId}', function (Server
 
 $router->map('POST', '/api/v1/transactions/withdraw/{walletId}', function (ServerRequestInterface $request) use ($container): ResponseInterface {
     return $container->get(TransactionController::class)->withdraw($request);
+});
+
+$router->map('POST', '/api/v1/transactions/transfer', function (ServerRequestInterface $request) use ($container): ResponseInterface {
+    return $container->get(TransactionController::class)->transfer($request);
 });
 
 return [$container, $router];

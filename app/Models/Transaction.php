@@ -5,52 +5,200 @@ namespace App\Models;
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\ValueObjects\Money;
+use DateTimeImmutable;
+use Ramsey\Uuid\Uuid;
 
 class Transaction
 {
-    private ?string $id = null;
-    private TransactionType $type;
-    private ?string $fromWalletId;
-    private ?string $toWalletId;
-    private Money $amount;
-    private string $description;
-    private TransactionStatus $status;
-    private ?string $createdAt = null;
-    private ?string $updatedAt = null;
-
     private function __construct(
+        private readonly string $id,
+        private readonly TransactionType $type,
+        private readonly ?string $fromWalletId,
+        private readonly ?string $toWalletId,
+        private readonly Money $amount,
+        private readonly string $description,
+        private readonly TransactionStatus $status,
+        private readonly DateTimeImmutable $createdAt,
+        private readonly DateTimeImmutable $updatedAt,
+    ) {
+        $this->validateTransaction();
+    }
+
+    private function validateTransaction(): void
+    {
+        if (!$this->amount->isPositive()) {
+            throw new \InvalidArgumentException('Transaction amount must be positive');
+        }
+
+        if ($this->type === TransactionType::DEPOSIT && $this->toWalletId === null) {
+            throw new \InvalidArgumentException('Deposit must have a destination wallet');
+        }
+
+        if ($this->type === TransactionType::WITHDRAW && $this->fromWalletId === null) {
+            throw new \InvalidArgumentException('Withdrawal must have a source wallet');
+        }
+
+        if ($this->type === TransactionType::TRANSFER) {
+            if ($this->fromWalletId === null || $this->toWalletId === null) {
+                throw new \InvalidArgumentException('Transfer must have both source and destination wallets');
+            }
+
+            if ($this->fromWalletId === $this->toWalletId) {
+                throw new \InvalidArgumentException('Cannot transfer to the same wallet');
+            }
+        }
+    }
+
+    public static function createDeposit(
+        string $toWalletId,
+        Money $amount,
+        string $description = 'Deposit to wallet',
+    ): self {
+        $now = new DateTimeImmutable();
+
+        return new self(
+            Uuid::uuid4()->toString(),
+            TransactionType::DEPOSIT,
+            null,
+            $toWalletId,
+            $amount,
+            $description,
+            TransactionStatus::COMPLETED,
+            $now,
+            $now,
+        );
+    }
+
+    public static function createWithdrawal(
+        string $fromWalletId,
+        Money $amount,
+        string $description = 'Withdrawal from wallet',
+    ): self {
+        $now = new DateTimeImmutable();
+
+        return new self(
+            Uuid::uuid4()->toString(),
+            TransactionType::WITHDRAW,
+            $fromWalletId,
+            null,
+            $amount,
+            $description,
+            TransactionStatus::COMPLETED,
+            $now,
+            $now,
+        );
+    }
+
+    public static function createTransfer(
+        string $fromWalletId,
+        string $toWalletId,
+        Money $amount,
+        string $description = 'Transfer between wallets',
+    ): self {
+        $now = new DateTimeImmutable();
+
+        return new self(
+            Uuid::uuid4()->toString(),
+            TransactionType::TRANSFER,
+            $fromWalletId,
+            $toWalletId,
+            $amount,
+            $description,
+            TransactionStatus::PENDING,
+            $now,
+            $now,
+        );
+    }
+
+    public static function reconstitute(
+        string $id,
         TransactionType $type,
         ?string $fromWalletId,
         ?string $toWalletId,
         Money $amount,
-        string $description = '',
-        TransactionStatus $status = TransactionStatus::PENDING
-    ) {
-        if (!$amount->isPositive()) {
-            throw new \InvalidArgumentException('Amount must be positive');
-        }
-
-        $this->type = $type;
-        $this->fromWalletId = $fromWalletId;
-        $this->toWalletId = $toWalletId;
-        $this->amount = $amount;
-        $this->description = $description;
-        $this->status = $status;
+        string $description,
+        TransactionStatus $status,
+        DateTimeImmutable $createdAt,
+        DateTimeImmutable $updatedAt,
+    ): self {
+        return new self(
+            $id,
+            $type,
+            $fromWalletId,
+            $toWalletId,
+            $amount,
+            $description,
+            $status,
+            $createdAt,
+            $updatedAt,
+        );
     }
 
-    public function id(): ?string
+    public function withId(string $id): self
+    {
+        return new self(
+            $id,
+            $this->type,
+            $this->fromWalletId,
+            $this->toWalletId,
+            $this->amount,
+            $this->description,
+            $this->status,
+            $this->createdAt,
+            $this->updatedAt,
+        );
+    }
+
+    public function complete(): self
+    {
+        if ($this->status === TransactionStatus::COMPLETED) {
+            throw new \DomainException('Transaction is already completed');
+        }
+
+        if ($this->status === TransactionStatus::FAILED) {
+            throw new \DomainException('Cannot complete a failed transaction');
+        }
+
+        return new self(
+            $this->id,
+            $this->type,
+            $this->fromWalletId,
+            $this->toWalletId,
+            $this->amount,
+            $this->description,
+            TransactionStatus::COMPLETED,
+            $this->createdAt,
+            new DateTimeImmutable(),
+        );
+    }
+
+    public function fail(): self
+    {
+        if ($this->status === TransactionStatus::COMPLETED) {
+            throw new \DomainException('Cannot fail a completed transaction');
+        }
+
+        return new self(
+            $this->id,
+            $this->type,
+            $this->fromWalletId,
+            $this->toWalletId,
+            $this->amount,
+            $this->description,
+            TransactionStatus::FAILED,
+            $this->createdAt,
+            new DateTimeImmutable(),
+        );
+    }
+
+    public function id(): string
     {
         return $this->id;
     }
 
-    public function setId(string $id): void
+    public function type(): TransactionType
     {
-        $this->id = $id;
-    }
-
-    public function type(): string
-    {
-        return $this->type->value;
+        return $this->type;
     }
 
     public function fromWalletId(): ?string
@@ -73,47 +221,33 @@ class Transaction
         return $this->description;
     }
 
-    public function status(): string
+    public function status(): TransactionStatus
     {
-        return $this->status->value;
+        return $this->status;
     }
 
-    public function createdAt(): ?string
+    public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function updatedAt(): ?string
+    public function updatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
-    public function setCreatedAt(string $createdAt): void
+    public function isCompleted(): bool
     {
-        $this->createdAt = $createdAt;
+        return $this->status === TransactionStatus::COMPLETED;
     }
 
-    public function setUpdatedAt(string $updatedAt): void
+    public function isPending(): bool
     {
-        $this->updatedAt = $updatedAt;
+        return $this->status === TransactionStatus::PENDING;
     }
 
-    public static function deposit(string $toWalletId, Money $amount, ?string $description = 'Deposit to wallet'): self
+    public function isFailed(): bool
     {
-        return new self(TransactionType::DEPOSIT, null, $toWalletId, $amount, $description, TransactionStatus::COMPLETED);
-    }
-
-    public static function withdraw(string $fromWalletId, Money $amount, ?string $description = 'Withdraw from wallet'): self
-    {
-        return new self(TransactionType::WITHDRAW, $fromWalletId, null, $amount, $description, TransactionStatus::COMPLETED);
-    }
-
-    public static function transfer(string $fromWalletId, string $toWalletId, Money $amount): self
-    {
-        if ($fromWalletId === $toWalletId) {
-            throw new \InvalidArgumentException('Cannot transfer to the same wallet');
-        }
-
-        return new self(TransactionType::TRANSFER, $fromWalletId, $toWalletId, $amount);
+        return $this->status === TransactionStatus::FAILED;
     }
 }

@@ -48,9 +48,9 @@ class ArrTest extends TestCase
         $array = [
             'user' => [
                 'profile' => [
-                    'name' => 'John Doe'
-                ]
-            ]
+                    'name' => 'John Doe',
+                ],
+            ],
         ];
 
         $result = Arr::get($array, 'user.profile.name');
@@ -62,8 +62,8 @@ class ArrTest extends TestCase
     {
         $array = [
             'user' => [
-                'profile' => []
-            ]
+                'profile' => [],
+            ],
         ];
 
         $result = Arr::get($array, 'user.profile.name', 'Unknown');
@@ -74,7 +74,7 @@ class ArrTest extends TestCase
     public function testGetReturnsDefaultWhenIntermediateKeyNotFoundInNestedPath(): void
     {
         $array = [
-            'user' => []
+            'user' => [],
         ];
 
         $result = Arr::get($array, 'user.profile.name', 'Not Found');
@@ -86,8 +86,8 @@ class ArrTest extends TestCase
     {
         $array = [
             'user' => [
-                'profile' => null
-            ]
+                'profile' => null,
+            ],
         ];
 
         $result = Arr::get($array, 'user.profile', 'default');
@@ -119,7 +119,7 @@ class ArrTest extends TestCase
             'name' => 'John',
             'email' => 'john@example.com',
             'password' => 'secret',
-            'age' => 30
+            'age' => 30,
         ];
         $keys = ['name', 'email'];
 
@@ -143,7 +143,7 @@ class ArrTest extends TestCase
         $array = [
             'name' => 'John',
             'email' => 'john@example.com',
-            'age' => 30
+            'age' => 30,
         ];
         $keys = ['email', 'name'];
 
@@ -170,7 +170,7 @@ class ArrTest extends TestCase
             'name' => 'John',
             'email' => 'john@example.com',
             'password' => 'secret',
-            'age' => 30
+            'age' => 30,
         ];
         $keys = ['password', 'age'];
 

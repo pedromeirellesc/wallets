@@ -6,14 +6,6 @@ namespace App\Utils;
 
 class Arr
 {
-    /**
-     * Obtém um valor de um array aninhado usando a notação "ponto".
-     *
-     * @param array $array O array de onde buscar o valor.
-     * @param string|null $key A chave para buscar, usando notação de ponto (ex: 'user.profile.name').
-     * @param mixed $default O valor padrão a ser retornado se a chave não for encontrada.
-     * @return mixed
-     */
     public static function get(array $array, ?string $key, mixed $default = null): mixed
     {
         if ($key === null) {

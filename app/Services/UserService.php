@@ -17,8 +17,9 @@ class UserService
         private readonly WalletService $walletService,
         private readonly UserValidator $userValidator,
         private readonly PasswordHasher $passwordHasher,
-        private readonly JwtTokenGenerator $tokenGenerator
-    ) {}
+        private readonly JwtTokenGenerator $tokenGenerator,
+    ) {
+    }
 
     public function register(array $data): User
     {
@@ -28,7 +29,7 @@ class UserService
             $validatedData['name'],
             $validatedData['email'],
             $this->passwordHasher->hash($validatedData['password']),
-            UserType::from($validatedData['type'])
+            UserType::from($validatedData['type']),
         );
 
         $user = $this->userRepository->save($user);

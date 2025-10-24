@@ -31,7 +31,7 @@ class UserValidatorTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'type' => 'COMMON',
-            'extra_field' => 'should_be_ignored'
+            'extra_field' => 'should_be_ignored',
         ];
 
         $validatedData = $this->validator->validateCreate($data);

@@ -6,7 +6,9 @@ use App\Models\Wallet;
 
 class WalletResource
 {
-    public function __construct(private readonly Wallet $wallet) {}
+    public function __construct(private readonly Wallet $wallet)
+    {
+    }
 
     public function toArray(): array
     {

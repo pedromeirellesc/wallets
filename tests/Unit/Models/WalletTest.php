@@ -8,7 +8,6 @@ use PHPUnit\Framework\TestCase;
 
 class WalletTest extends TestCase
 {
-
     private Money $money;
 
     public function setUp(): void

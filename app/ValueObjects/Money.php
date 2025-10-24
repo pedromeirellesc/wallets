@@ -4,7 +4,9 @@ namespace App\ValueObjects;
 
 class Money
 {
-    private function __construct(private readonly int $cents) {}
+    private function __construct(private readonly int $cents)
+    {
+    }
 
     public static function fromCents(int $cents): self
     {

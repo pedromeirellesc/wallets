@@ -11,7 +11,11 @@ use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
 [$container, $router] = require_once dirname(__DIR__) . '/bootstrap/app.php';
 
 $request = ServerRequestFactory::fromGlobals(
-    $_SERVER, $_GET, $_POST, $_COOKIE, $_FILES
+    $_SERVER,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_FILES,
 );
 
 $contentType = $request->getHeaderLine('Content-Type');

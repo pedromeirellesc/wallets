@@ -10,7 +10,9 @@ use PDO;
 
 class WalletRepositoryMySql implements WalletRepositoryContract
 {
-    public function __construct(private readonly PDO $pdo) {}
+    public function __construct(private readonly PDO $pdo)
+    {
+    }
 
     public function save(Wallet $wallet): Wallet
     {
@@ -84,7 +86,7 @@ class WalletRepositoryMySql implements WalletRepositoryContract
         $stmt = $this->pdo->query($sql);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return array_map(fn($data) => $this->hydrate($data), $results);
+        return array_map(fn ($data) => $this->hydrate($data), $results);
     }
 
     public function hydrate(array $data): Wallet
@@ -94,7 +96,7 @@ class WalletRepositoryMySql implements WalletRepositoryContract
             (int) $data['user_id'],
             Money::fromCents((int) $data['balance']),
             new DateTimeImmutable($data['created_at']),
-            new DateTimeImmutable($data['updated_at'])
+            new DateTimeImmutable($data['updated_at']),
         );
     }
 }

@@ -24,14 +24,25 @@ abstract class AppTestCase extends BaseTestCase
 
         [$this->container, $this->router] = require dirname(__DIR__) . '/bootstrap/app.php';
 
-        $this->container->extend(PDO::class)->setConcrete(fn() => self::getConnection());
+        $this->container->extend(PDO::class)->setConcrete(fn () => self::getConnection());
 
-        self::getConnection()->beginTransaction();
+        $this->ensureNoActiveTransaction();
+        $this->cleanDatabase();
+    }
+
+    protected function cleanDatabase(): void
+    {
+        $pdo = self::getConnection();
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+        $pdo->exec('TRUNCATE TABLE transactions');
+        $pdo->exec('TRUNCATE TABLE wallets');
+        $pdo->exec('TRUNCATE TABLE users');
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
     }
 
     protected function tearDown(): void
     {
-        self::getConnection()->rollBack();
+        $this->ensureNoActiveTransaction();
         parent::tearDown();
     }
 
@@ -76,6 +87,13 @@ abstract class AppTestCase extends BaseTestCase
         $testDbPdo->exec($schemaSql);
     }
 
+    private function ensureNoActiveTransaction(): void
+    {
+        while (self::getConnection()->inTransaction()) {
+            self::getConnection()->rollBack();
+        }
+    }
+
     public function postJson(string $uri, array $data): ResponseInterface
     {
         $headers = ['Content-Type' => 'application/json'];
@@ -86,7 +104,7 @@ abstract class AppTestCase extends BaseTestCase
             uri: $uri,
             method: 'POST',
             body: 'php://input',
-            headers: $headers
+            headers: $headers,
         );
         $request = $request->withParsedBody($data);
 
@@ -102,7 +120,7 @@ abstract class AppTestCase extends BaseTestCase
             uploadedFiles: [],
             uri: $uri,
             method: 'GET',
-            headers: $headers
+            headers: $headers,
         );
 
         return $this->router->dispatch($request);

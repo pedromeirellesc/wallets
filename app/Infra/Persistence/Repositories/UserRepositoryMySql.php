@@ -9,7 +9,9 @@ use PDO;
 
 class UserRepositoryMySql implements UserRepositoryContract
 {
-    public function __construct(private readonly PDO $pdo) {}
+    public function __construct(private readonly PDO $pdo)
+    {
+    }
 
     public function save(User $user): User
     {
@@ -82,7 +84,7 @@ class UserRepositoryMySql implements UserRepositoryContract
             $data['name'],
             $data['email'],
             $data['password'],
-            UserType::from($data['type'])
+            UserType::from($data['type']),
         );
     }
 }

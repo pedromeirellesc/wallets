@@ -3,7 +3,6 @@
 namespace App\Validators;
 
 use App\Contracts\ExistsCheckerInterface;
-use App\Exceptions\ValidationException;
 use App\Utils\Arr;
 
 class TransactionValidator extends Validator

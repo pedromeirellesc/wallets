@@ -5,9 +5,9 @@ namespace Tests\Unit\Infra\Persistence\Repositories;
 use App\Enums\UserType;
 use App\Infra\Persistence\Repositories\UserRepositoryMySql;
 use App\Models\User;
-use PHPUnit\Framework\TestCase;
 use PDO;
 use PDOStatement;
+use PHPUnit\Framework\TestCase;
 
 class UserRepositoryMySqlTest extends TestCase
 {
@@ -78,7 +78,6 @@ class UserRepositoryMySqlTest extends TestCase
     public function testInsertSuccessfully(): void
     {
         $user = User::create('John Doe', 'john@example.com', 'hashed_password', UserType::COMMON);
-        $userWithId = $user->withId(1);
 
         $this->pdoMock
             ->expects($this->once())
@@ -139,7 +138,7 @@ class UserRepositoryMySqlTest extends TestCase
             'name' => 'John Doe',
             'email' => $email,
             'password' => 'hashed_password',
-            'type' => 'COMMON'
+            'type' => 'COMMON',
         ];
 
         $this->pdoMock
@@ -196,7 +195,7 @@ class UserRepositoryMySqlTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@example.com',
             'password' => 'hashed_password',
-            'type' => 'COMMON'
+            'type' => 'COMMON',
         ];
 
         $expectedUser = User::reconstitute(
@@ -204,7 +203,7 @@ class UserRepositoryMySqlTest extends TestCase
             $userDataFromDb['name'],
             $userDataFromDb['email'],
             $userDataFromDb['password'],
-            UserType::from($userDataFromDb['type'])
+            UserType::from($userDataFromDb['type']),
         );
 
         $result = $this->repository->hydrate($userDataFromDb);

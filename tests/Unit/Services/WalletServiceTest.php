@@ -4,16 +4,15 @@ namespace Tests\Unit\Services;
 
 use App\Enums\UserType;
 use App\Infra\Persistence\Repositories\Contracts\UserRepositoryContract;
+use App\Infra\Persistence\Repositories\Contracts\WalletRepositoryContract;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Services\WalletService;
 use App\ValueObjects\Money;
 use PHPUnit\Framework\TestCase;
-use App\Services\WalletService;
-use App\Infra\Persistence\Repositories\Contracts\WalletRepositoryContract;
 
 class WalletServiceTest extends TestCase
 {
-
     private WalletService $walletService;
     private WalletRepositoryContract $walletRepository;
     private UserRepositoryContract $userRepository;
@@ -47,7 +46,8 @@ class WalletServiceTest extends TestCase
             ->willReturn(Wallet::create(1));
 
         $output = $this->walletService->createWalletForUser(1);
-        $this->assertInstanceOf(Wallet::class, $output);;
+        $this->assertInstanceOf(Wallet::class, $output);
+        ;
     }
 
     public function testCreateWalletForUserWhenUserNotFound(): void

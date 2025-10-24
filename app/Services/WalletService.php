@@ -11,8 +11,9 @@ class WalletService
 {
     public function __construct(
         private readonly WalletRepositoryContract $walletRepository,
-        private readonly UserRepositoryContract $userRepository
-    ) {}
+        private readonly UserRepositoryContract $userRepository,
+    ) {
+    }
 
     public function createWalletForUser(int $userId): Wallet
     {

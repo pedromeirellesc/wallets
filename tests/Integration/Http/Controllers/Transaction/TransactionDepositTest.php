@@ -4,100 +4,80 @@ namespace Http\Controllers\Transaction;
 
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
-use App\Enums\UserType;
-use App\Exceptions\ValidationException;
 use Tests\AppTestCase;
+use Tests\Traits\CreatesUsers;
 use Tests\Traits\DatabaseAssertions;
+use Tests\Traits\MakesTransactions;
 
 class TransactionDepositTest extends AppTestCase
 {
     use DatabaseAssertions;
+    use CreatesUsers;
+    use MakesTransactions;
 
-    /*
     public function testDepositSuccessfully(): void
     {
-        $this->postJson('/api/v1/users/register', [
-            'name' => 'John Doe',
-            'email' => 'john@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-            'type' => UserType::COMMON->value
-        ]);
-        $responseGetWallets = $this->get('/api/v1/wallets');
-        $walletId = json_decode($responseGetWallets->getBody()->getContents(), true)['data'][0]['id'];
+        $walletId = $this->createUserWithWallet();
 
-        $this->assertDatabaseHas('wallets', [
-            'id' => $walletId,
-            'balance' => 0.00,
-        ]);
-        $response = $this->postJson("/api/v1/transactions/deposit/{$walletId}", [
-            'amount' => 100.00,
-        ]);
+        $this->assertDatabaseHas('wallets', ['id' => $walletId, 'balance' => 0]);
 
-        $this->assertEquals(201, $response->getStatusCode());
+        $result = $this->makeDeposit($walletId, 100.00);
+
+        $this->assertEquals(201, $result['response']->getStatusCode());
         $this->assertDatabaseHas('transactions', [
             'to_wallet_id' => $walletId,
-            'amount' => 100.00,
+            'amount' => 10000,
             'type' => TransactionType::DEPOSIT->value,
             'status' => TransactionStatus::COMPLETED->value,
         ]);
-        $this->assertDatabaseHas('wallets', [
-            'id' => $walletId,
-            'balance' => 100.00,
-        ]);
+        $this->assertDatabaseHas('wallets', ['id' => $walletId, 'balance' => 10000]);
     }
 
-    public function testDepositWithInexistentWallet(): void
+    public function testDepositWithNonExistentWallet(): void
     {
-        $response = $this->postJson("/api/v1/transactions/deposit/1", [
-            'amount' => 100.00,
-        ]);
+        $result = $this->makeDeposit('non-existent-id', 100.00);
 
-        $this->assertEquals(422, $response->getStatusCode());
-        $this->assertDatabaseMissing('transactions', [
-            'to_wallet_id' => 1,
-            'amount' => 100.00,
-            'type' => TransactionType::DEPOSIT->value,
-            'status' => TransactionStatus::COMPLETED->value,
-        ]);
-        $this->assertDatabaseMissing('wallets', [
-            'id' => 1,
-            'balance' => 100.00,
-        ]);
+        $this->assertEquals(422, $result['response']->getStatusCode());
+        $this->assertArrayHasKey('error', $result['data']);
+        $this->assertEquals('Wallet not found', $result['data']['message']);
     }
 
-    public function testDepositWithInvalidAmount(): void
+    public function testDepositWithNegativeAmount(): void
     {
-        $this->postJson('/api/v1/users/register', [
-            'name' => 'John Doe',
-            'email' => 'john@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-            'type' => UserType::COMMON->value
-        ]);
-        $responseGetWallets = $this->get('/api/v1/wallets');
-        $walletId = json_decode($responseGetWallets->getBody()->getContents(), true)['data'][0]['id'];
+        $walletId = $this->createUserWithWallet();
 
-        $this->assertDatabaseHas('wallets', [
-            'id' => $walletId,
-            'balance' => 0.00,
-        ]);
+        $result = $this->makeDeposit($walletId, -100.00);
+
+        $this->assertEquals(400, $result['response']->getStatusCode());
+        $this->assertDatabaseHas('wallets', ['id' => $walletId, 'balance' => 0]);
+        $this->assertArrayHasKey('error', $result['data']);
+        $this->assertEquals('Money cannot be negative', $result['data']['message']);
+    }
+
+    public function testDepositWithZeroAmount(): void
+    {
+        $walletId = $this->createUserWithWallet();
+
+        $result = $this->makeDeposit($walletId, 0);
+
+        $this->assertEquals(400, $result['response']->getStatusCode());
+        $this->assertDatabaseHas('wallets', ['id' => $walletId, 'balance' => 0]);
+        $this->assertArrayHasKey('error', $result['data']);
+        $this->assertEquals('Transaction amount must be positive', $result['data']['message']);
+    }
+
+    public function testDepositWithNonNumericAmount(): void
+    {
+        $walletId = $this->createUserWithWallet();
+
         $response = $this->postJson("/api/v1/transactions/deposit/{$walletId}", [
-            'amount' => -1.00
+            'amount' => 'not-a-number',
         ]);
+        $data = json_decode($response->getBody()->getContents(), true);
 
-        $this->assertEquals(422, $response->getStatusCode());
-        $this->assertDatabaseMissing('transactions', [
-            'to_wallet_id' => $walletId,
-            'amount' => -1.00,
-            'type' => TransactionType::DEPOSIT->value,
-            'status' => TransactionStatus::COMPLETED->value,
-        ]);
-        $this->assertDatabaseMissing('wallets', [
-            'id' => $walletId,
-            'balance' => -1.00,
-        ]);
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertDatabaseHas('wallets', ['id' => $walletId, 'balance' => 0]);
+        $this->assertArrayHasKey('error', $data);
+        $this->assertEquals('Amount must be numeric', $data['message']);
     }
-    */
-
 }

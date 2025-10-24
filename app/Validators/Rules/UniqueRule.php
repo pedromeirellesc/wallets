@@ -7,8 +7,9 @@ use App\Contracts\ExistsCheckerInterface;
 class UniqueRule
 {
     public function __construct(
-        private readonly ExistsCheckerInterface $existsChecker
-    ) {}
+        private readonly ExistsCheckerInterface $existsChecker,
+    ) {
+    }
 
     public function validate(string $table, string $column, mixed $value): bool
     {

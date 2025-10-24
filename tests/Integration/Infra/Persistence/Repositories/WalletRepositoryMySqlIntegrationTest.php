@@ -7,7 +7,6 @@ use App\Infra\Persistence\Repositories\UserRepositoryMySql;
 use App\Infra\Persistence\Repositories\WalletRepositoryMySql;
 use App\Models\User;
 use App\Models\Wallet;
-use App\ValueObjects\Money;
 use Ramsey\Uuid\Uuid;
 use Tests\AppTestCase;
 use Tests\Traits\DatabaseAssertions;

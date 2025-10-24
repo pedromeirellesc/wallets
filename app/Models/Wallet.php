@@ -13,7 +13,7 @@ class Wallet
         private readonly int $userId,
         private readonly Money $balance,
         private readonly DateTimeImmutable $createdAt,
-        private readonly DateTimeImmutable $updatedAt
+        private readonly DateTimeImmutable $updatedAt,
     ) {
     }
 
@@ -26,7 +26,7 @@ class Wallet
             $userId,
             Money::zero(),
             $now,
-            $now
+            $now,
         );
     }
 
@@ -35,7 +35,7 @@ class Wallet
         int $userId,
         Money $balance,
         DateTimeImmutable $createdAt,
-        DateTimeImmutable $updatedAt
+        DateTimeImmutable $updatedAt,
     ): self {
         return new self($id, $userId, $balance, $createdAt, $updatedAt);
     }
@@ -47,7 +47,7 @@ class Wallet
             $this->userId,
             $this->balance,
             $this->createdAt,
-            $this->updatedAt
+            $this->updatedAt,
         );
     }
 
@@ -58,7 +58,7 @@ class Wallet
             $this->userId,
             $this->balance->add($amount),
             $this->createdAt,
-            new DateTimeImmutable()
+            new DateTimeImmutable(),
         );
     }
 
@@ -73,7 +73,7 @@ class Wallet
             $this->userId,
             $this->balance->subtract($amount),
             $this->createdAt,
-            new DateTimeImmutable()
+            new DateTimeImmutable(),
         );
     }
 

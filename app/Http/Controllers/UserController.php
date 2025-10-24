@@ -12,8 +12,9 @@ use Psr\Http\Message\ServerRequestInterface;
 class UserController
 {
     public function __construct(
-        private readonly UserService $userService
-    ) {}
+        private readonly UserService $userService,
+    ) {
+    }
 
     public function register(ServerRequestInterface $request): ResponseInterface
     {
@@ -24,17 +25,17 @@ class UserController
 
             return new JsonResponse([
                 'message' => 'User registered successfully.',
-                'user_id' => $user->id()
+                'user_id' => $user->id(),
             ], 201);
         } catch (ValidationException $e) {
             return new JsonResponse([
                 'error' => 'Validation failed.',
-                'details' => $e->getErrors()
+                'details' => $e->getErrors(),
             ], 422);
         } catch (\Exception $e) {
             return new JsonResponse([
                 'error' => 'Registration failed.',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -48,16 +49,16 @@ class UserController
 
             return new JsonResponse([
                 'message' => 'User logged successfully.',
-                'token' => $token
+                'token' => $token,
             ], 200);
         } catch (AuthenticationException $e) {
             return new JsonResponse([
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 401);
         } catch (\Exception $e) {
             return new JsonResponse([
                 'error' => 'Login failed.',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

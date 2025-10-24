@@ -42,14 +42,14 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
                 'John Doe',
                 'john@example.com',
                 'hash1',
-                UserType::COMMON
+                UserType::COMMON,
             ),
             User::create(
                 'Jane Smith',
                 'jane@example.com',
                 'hash2',
-                UserType::COMMON
-            )
+                UserType::COMMON,
+            ),
         ];
 
         foreach ($users as $userData) {
@@ -73,7 +73,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
             'John Doe',
             'john@example.com',
             'hashed_password',
-            UserType::COMMON
+            UserType::COMMON,
         );
 
         $this->repository->save($userData);
@@ -100,7 +100,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
             'John Doe',
             'john@example.com',
             'hash',
-            UserType::COMMON
+            UserType::COMMON,
         );
 
         $this->repository->save($userData);
@@ -118,7 +118,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
             'Jane Smith',
             'jane@example.com',
             'secure_hash',
-            UserType::COMMON
+            UserType::COMMON,
         );
 
         $this->repository->save($userData);
@@ -144,7 +144,7 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
             'Complex Name With Spëcial Çhars',
             'test+tag@example.co.uk',
             'p@$$w0rd!#%',
-            UserType::COMMON
+            UserType::COMMON,
         );
 
         $this->repository->save($originalData);
@@ -163,14 +163,14 @@ class UserRepositoryMySqlIntegrationTest extends AppTestCase
             'User One',
             'user1@example.com',
             'hash1',
-            UserType::COMMON
+            UserType::COMMON,
         );
 
         $user2 = User::create(
             'User Two',
             'user2@example.com',
             'hash2',
-            UserType::COMMON
+            UserType::COMMON,
         );
 
         $this->repository->save($user1);

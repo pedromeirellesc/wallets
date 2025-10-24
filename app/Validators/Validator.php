@@ -61,6 +61,9 @@ abstract class Validator
     private function addError(string $field, string $rule): void
     {
         $messageKey = "{$field}.{$rule}";
+        $ruleName = strtok($rule, ':');
+        $messageKey = "{$field}.{$ruleName}";
+
         $message = $this->messages()[$messageKey] ?? "The {$field} field is invalid.";
         $this->errors[$field][] = $message;
     }
@@ -73,6 +76,16 @@ abstract class Validator
     protected function validateUnique(mixed $value, string $table, string $column): bool
     {
         return !$this->getExistsChecker()->exists($table, $column, $value);
+    }
+
+    protected function validateExists(mixed $value, string $table, string $column): bool
+    {
+        return $this->getExistsChecker()->exists($table, $column, $value);
+    }
+
+    protected function validateNumeric(mixed $value): bool
+    {
+        return is_numeric($value);
     }
 
     protected function validateEmail(mixed $value): bool

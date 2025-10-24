@@ -7,16 +7,15 @@ use App\Exceptions\AuthenticationException;
 use App\Exceptions\ValidationException;
 use App\Infra\Persistence\Repositories\Contracts\UserRepositoryContract;
 use App\Models\User;
+use App\Services\Auth\JwtTokenGenerator;
+use App\Services\Auth\PasswordHasher;
 use App\Services\UserService;
 use App\Services\WalletService;
 use App\Validators\UserValidator;
 use PHPUnit\Framework\TestCase;
-use App\Services\Auth\PasswordHasher;
-use App\Services\Auth\JwtTokenGenerator;
 
 class UserServiceTest extends TestCase
 {
-
     private UserRepositoryContract $userRepositoryMock;
     private UserValidator $userValidatorMock;
     private WalletService $walletServiceMock;
@@ -40,7 +39,7 @@ class UserServiceTest extends TestCase
             $this->walletServiceMock,
             $this->userValidatorMock,
             $this->passwordHasherMock,
-            $this->tokenGeneratorMock
+            $this->tokenGeneratorMock,
         );
 
         $this->validUserData = [
@@ -286,7 +285,7 @@ class UserServiceTest extends TestCase
             ->method('verify')
             ->with(
                 $this->equalTo($plainPassword),
-                $this->equalTo($hashedPassword)
+                $this->equalTo($hashedPassword),
             )
             ->willReturn(true);
 

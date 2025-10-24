@@ -24,7 +24,7 @@ class UserLoginTest extends AppTestCase
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => password_hash($this->password, PASSWORD_DEFAULT),
-            'type' => UserType::COMMON->value
+            'type' => UserType::COMMON->value,
         ];
 
         $sql = "INSERT INTO users (name, email, password, type) VALUES (:name, :email, :password, :type)";
@@ -51,7 +51,7 @@ class UserLoginTest extends AppTestCase
     {
         $response = $this->postJson('/api/v1/users/login', [
             'email' => $this->userData['email'],
-            'password' => 'wrong-password'
+            'password' => 'wrong-password',
         ]);
 
         $this->assertEquals(401, $response->getStatusCode());

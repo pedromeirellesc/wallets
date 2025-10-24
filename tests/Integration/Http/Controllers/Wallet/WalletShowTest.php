@@ -20,7 +20,7 @@ class WalletShowTest extends AppTestCase
             'email' => 'john@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'type' => UserType::COMMON->value
+            'type' => UserType::COMMON->value,
         ]);
         $responseGetWallets = $this->get('/api/v1/wallets');
         $walletId = json_decode($responseGetWallets->getBody()->getContents(), true)['data'][0]['id'];
