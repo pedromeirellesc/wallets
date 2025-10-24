@@ -1,7 +1,7 @@
 # Wallets API
 
-[![CI](https://github.com/seu-usuario/wallets/actions/workflows/ci.yml/badge.svg)](https://github.com/seu-usuario/wallets/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/seu-usuario/wallets/branch/main/graph/badge.svg)](https://codecov.io/gh/seu-usuario/wallets)
+[![CI](https://github.com/pedromeirellesc/wallets/actions/workflows/ci.yml/badge.svg)](https://github.com/pedromeirellesc/wallets/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/pedromeirellesc/wallets/branch/main/graph/badge.svg)](https://codecov.io/gh/pedromeirellesc/wallets)
 [![PHP Version](https://img.shields.io/badge/php-%3E%3D8.3-blue.svg)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
