@@ -7,7 +7,7 @@
 
 API para gerenciamento de carteiras desenvolvida com PHP sem uso de frameworks, com base em fundamentos de Clean Architecture, DDD e SOLID e desenvolvida orientada a testes (TDD).
 
-## 📋 Requisitos
+## Requisitos
 
 - PHP 8.3+
 - MySQL 8.0+
